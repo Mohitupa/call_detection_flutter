@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:http/http.dart' as http;
 import 'main.dart';
+import 'constant.dart' as constants;
 
 class UniqueNumberForm extends StatefulWidget {
   @override
@@ -55,6 +56,29 @@ class _UniqueNumberFormState extends State<UniqueNumberForm> {
   Future<void> _saveUniqueNumber() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('uniqueNumber', _uniqueNumberController.text);
+    await prefs.setString('logStartDate', (DateTime.now()).toString() );
+
+    var data = [{
+      'uniqueNumber': _uniqueNumberController.text
+    }];
+
+    var url = Uri.parse('${constants.apiUrl}/data');
+
+    try {
+      print(data);
+      final response = await http.post(url, body: data[0]);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Data stored successfully');
+      } else {
+        print('Failed to store data: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Error occurred
+      print('Error: $e');
+    }
+
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Unique number saved successfully')),
     );

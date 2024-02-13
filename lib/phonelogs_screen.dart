@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import './phone_textfield.dart';
 import 'package:call_log/call_log.dart';
 import './callLogs.dart';
 import 'dart:convert';
@@ -10,6 +9,7 @@ import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'constant.dart' as constants;
 
 class PhonelogsScreen extends StatefulWidget {
   @override
@@ -19,7 +19,6 @@ class PhonelogsScreen extends StatefulWidget {
 class _PhonelogsScreenState extends State<PhonelogsScreen>
     with WidgetsBindingObserver {
   //Iterable<CallLogEntry> entries;
-  PhoneTextField pt = new PhoneTextField();
   CallLogs cl = new CallLogs();
   late Timer _timer;
   List<CallLogEntry>? previousLogs;
@@ -33,17 +32,13 @@ class _PhonelogsScreenState extends State<PhonelogsScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     logs = cl.getCallLogs();
-    checkDeletedCallLogs();
+    // _getCallLogs();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  void checkDeletedCallLogs() async {
-    print("ruuning--------------------------");
   }
 
   @override
@@ -57,6 +52,88 @@ class _PhonelogsScreenState extends State<PhonelogsScreen>
     }
   }
 
+  List<dynamic> LogsData = [];
+
+  Future<List<dynamic>> _getCallLogs() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uniqueNumber = prefs.getString('uniqueNumber');
+    String? logStart = prefs.getString('logStartDate');
+    DateTime startLogDate = DateTime.parse(logStart!);
+    print("logStart$logStart");//2024-02-09 15:00:50.076778
+    // prefs.remove('uniqueNumber');
+    var apiUrl = Uri.parse('${constants.apiUrl}/getDatabyUniqueNumber/$uniqueNumber');
+    LogsData.clear();
+    try {
+      var response = await http.get(apiUrl);
+      var apiCallLogs = jsonDecode(response.body);
+      print(apiCallLogs);
+      var deviceCallLogs = await cl.getCallLogs();
+
+      Iterable<CallLogEntry> entries = await CallLog.query(
+        dateFrom: startLogDate.millisecondsSinceEpoch,
+      );
+
+      // entries = entries.where((entry) => entry.callType == CallType.incoming || entry.callType == CallType.outgoing);
+
+
+      for (var entry in entries) {
+          final callEntry = CallEntry(
+            duration: entry.duration.toString(),
+            number: entry.number,
+            timestamp: entry.timestamp.toString(),
+            callType: entry.callType.toString(),
+            name: entry.name,
+          );
+
+          var returnVal = DataStorage.checkDataExists(callEntry as CallEntry);
+          print(returnVal);
+        }
+      LogsData = apiCallLogs["data"];
+    } catch (e) {
+      List<CallEntry> dataList = [];
+
+      Iterable<CallLogEntry> entries = await CallLog.query(
+        dateFrom: startLogDate.millisecondsSinceEpoch,
+      );
+
+      for (var entry in entries) {
+        final callEntry = CallEntry(
+          duration: entry.duration.toString(),
+          number: entry.number,
+          timestamp: entry.timestamp.toString(),
+          callType: entry.callType.toString(),
+          name: entry.name,
+        );
+        dataList.add(callEntry);
+      }
+      await writeDataToFile(dataList);
+
+      // Directory directory = await getApplicationDocumentsDirectory();
+      // String jsonString = await rootBundle.loadString('${directory.path}/call_log.json');
+      // print("$jsonString--------------------------");
+      // print(JsonDecoder(jsonString));
+      print('Error: $e');
+    }
+    // print(LogsData);
+    return LogsData;
+  }
+
+  Future<void> writeDataToFile(List<CallEntry> dataList) async {
+
+    try {
+      Directory directory = await getApplicationDocumentsDirectory();
+      String filePath = '${directory.path}/call_log.json';
+      String jsonData = jsonEncode(dataList.map((entry) => entry.toJson()).toList());
+      File file = File(filePath);
+      print("$filePath");
+      await file.writeAsString(jsonData);
+      print('Data written to file successfully');
+    } catch (e) {
+      print('Error writing data to file: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,61 +142,37 @@ class _PhonelogsScreenState extends State<PhonelogsScreen>
       ),
       body: Column(
         children: [
-          //TextField(controller: t1, decoration: InputDecoration(labelText: "Phone number", contentPadding: EdgeInsets.all(10), suffixIcon: IconButton(icon: Icon(Icons.phone), onPressed: (){print("pressed");})),keyboardType: TextInputType.phone, textInputAction: TextInputAction.done, onSubmitted: (value) => call(value),),
-          FutureBuilder(
-              future: logs,
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: _getCallLogs(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  Iterable<CallLogEntry>? entries = snapshot.data;
-                  return Expanded(
-                    child: ListView.builder(
-                      itemBuilder: (context, index) {
-                        final entry = entries?.elementAt(index);
-                        final callType = entry?.callType!;
-
-                        final callEntry = CallEntry(
-                          duration: entry?.duration.toString(),
-                          number: entry?.number,
-                          timestamp: entry?.timestamp.toString(),
-                          callType: entry?.callType.toString(),
-                          name: entry?.name,
-                        );
-
-                        DataStorage.checkDataExists(callEntry as CallEntry);
-                        // DataStorage.storeData([callEntry]);
-
-                        return GestureDetector(
-                          child: Card(
-                            child: ListTile(
-                              leading: cl
-                                  .getAvator(callType!), // Using callType here
-                              title: cl.getTitle(entry),
-                              subtitle: Text(
-                                "${cl.formatDate(DateTime.fromMillisecondsSinceEpoch(entry?.timestamp ?? 0))}\n${cl.getTime(entry?.duration ?? 0)}",
-                              ),
-                              isThreeLine: true,
-                              trailing: IconButton(
-                                icon: Icon(Icons.phone),
-                                color: Colors.green,
-                                onPressed: () {
-                                  print(entry?.number);
-                                  cl.call(entry?.number ?? "");
-                                },
-                              ),
-                            ),
-                          ),
-                          onLongPress: () =>
-                              pt.update(entry?.number.toString()),
-                        );
-                      },
-                      itemCount:
-                          entries?.length ?? 0, // Adding null check for entries
-                    ),
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
                   );
                 } else {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    itemCount: snapshot.data?.length,
+                    itemBuilder: (context, index) {
+                      final log = snapshot.data?[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text('Number: ${log['number']}'),
+                          subtitle: Text(
+                            'Date/Time: ${DateTime.fromMillisecondsSinceEpoch(log['timestamp'] ?? 0)} \nid: ${log['id']} | Duration: ${log['duration']} | callType: ${ log['call_type'] != null ? log['call_type'].replaceAll("CallType.", ""): log['call_type']}',
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 }
-              })
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -132,15 +185,13 @@ class CallEntry {
   final String? timestamp;
   final String? callType;
   final String? name;
-  final String? avatar;
 
   CallEntry(
       {this.duration,
       this.number,
       this.timestamp,
       this.callType,
-      this.name,
-      this.avatar});
+      this.name});
 
   factory CallEntry.fromJson(Map<String, dynamic> json) {
     return CallEntry(
@@ -149,7 +200,6 @@ class CallEntry {
       timestamp: json['timestamp'] ?? 0,
       callType: json['callType'],
       name: json['name'],
-      avatar: json['avatar'],
     );
   }
 
@@ -160,7 +210,6 @@ class CallEntry {
       'timestamp': timestamp,
       'callType': callType,
       'name': name.toString(),
-      'avatar': avatar.toString(),
     };
   }
 }
@@ -172,7 +221,7 @@ class DataStorage {
     String? uniqueNumber = prefs.getString('uniqueNumber');
     List<Map<String, dynamic>> data =
         dataList.map((entry) => entry.toJson()).toList();
-    var url = Uri.parse('http://10.0.2.2:3000/api/data');
+    var url = Uri.parse('${constants.apiUrl}/data');
     try {
       data[0]['uniqueNumber'] = uniqueNumber;
       final response = await http.post(url, body: data[0]);
@@ -182,15 +231,16 @@ class DataStorage {
         print('Failed to store data: ${response.statusCode}');
       }
     } catch (e) {
-      // Error occurred
       print('Error: $e');
     }
     return data;
   }
 
   static Future<bool> checkDataExists(CallEntry entry) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uniqueNumber = prefs.getString('uniqueNumber');
     var url = Uri.parse(
-        'http://10.0.2.2:3000/api/check-existence?number=${entry.number}&timestamp=${entry.timestamp}');
+        '${constants.apiUrl}/check-existence?number=${entry.number}&timestamp=${entry.timestamp}&uniqueNumber=${uniqueNumber}');
     try {
       var response = await http.get(url);
       var existingData = jsonDecode(response.body);
@@ -206,8 +256,11 @@ class DataStorage {
   }
 
   static Future<Object> getLogList(CallEntry entry) async {
-    var url = Uri.parse('http://10.0.2.2:3000/api/data');
     try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uniqueNumber = prefs.getString('uniqueNumber');
+    var url = Uri.parse('${constants.apiUrl}/getDatabyUniqueNumber/$uniqueNumber');
+
       final response = await http.get(url);
       if (response.statusCode == 200) {
         List<dynamic> existingData = jsonDecode(response.body);
