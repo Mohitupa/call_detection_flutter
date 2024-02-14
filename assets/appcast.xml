@@ -6,14 +6,14 @@
         <title>Version 2.0</title>
         <description>desc Версия</description>
         <pubDate>Sat, 26 Jul 2014 15:20:11 +0000</pubDate>
-        <enclosure url="https://play.google.com/store/apps/details?id=com.verein.cloud" sparkle:version="2.0" />
+        <enclosure url="https://play.google.com/store/apps/details?id=com.verein.cloud" sparkle:version="2.0" sparkle:os="android"/>
         <sparkle:tags> <sparkle:criticalUpdate /> </sparkle:tags> 
     </item>    
     <item>
         <title>Version 2.0.5</title>
         <sparkle:version>2.0.5</sparkle:version>
         <pubDate>Sat, 26 Jul 2014 15:20:11 +0000</pubDate>
-        <enclosure url="https://play.google.com/store/apps/details?id=com.verein.cloud" sparkle:version="2.0.5" />
+        <enclosure url="https://play.google.com/store/apps/details?id=com.verein.cloud" sparkle:version="2.0.5" sparkle:os="android"/>
         <sparkle:maximumSystemVersion>2.0.5</sparkle:maximumSystemVersion>
     </item>
   </channel>
