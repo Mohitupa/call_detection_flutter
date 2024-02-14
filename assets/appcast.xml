@@ -6,6 +6,30 @@
         <description>Updates for Your App</description>
         <language>en</language>
         <item>
+            <title>Version 1.0.0</title>
+            <description><![CDATA[
+                <![CDATA[
+                <p>New features:</p>
+                <ul>
+                    <li>Feature 1</li>
+                    <li>Feature 2</li>
+                    <!-- Add more features here -->
+                </ul>
+                
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Fixed issue with XYZ</li>
+                    <li>Improved performance</li>
+                    <!-- Add more bug fixes here -->
+                </ul>
+                <p>Update now!</p>
+                ]]>
+            </description>
+            <pubDate>Sun, 01 Jan 2023 00:00:00 GMT</pubDate>
+            <enclosure url="YOUR_APP_DOWNLOAD_URL" sparkle:version="1.0.0" sparkle:shortVersionString="1.0.0" length="SIZE_IN_BYTES" type="application/octet-stream"/>
+            <!-- Replace YOUR_APP_DOWNLOAD_URL and SIZE_IN_BYTES with appropriate values for your app -->
+        </item>
+        <item>
             <title>Version 2.0.5(8)</title>
             <description><![CDATA[
                 <![CDATA[
@@ -28,7 +52,8 @@
             <pubDate>Sun, 14 Feb 2024 00:00:00 GMT</pubDate>
             <enclosure url="YOUR_APP_DOWNLOAD_URL" sparkle:version="2.0.5" sparkle:shortVersionString="2.0.5" length="SIZE_IN_BYTES" type="application/octet-stream"/>
             <!-- Replace YOUR_APP_DOWNLOAD_URL and SIZE_IN_BYTES with appropriate values for your app -->
-        </item>
+        </item>        
+        <!-- Add more items for subsequent updates -->
     </channel>
 </rss>
 
