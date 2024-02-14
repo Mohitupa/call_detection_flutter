@@ -37,6 +37,8 @@ class _audioRecorderState extends State<audioRecorder> {
     try {
       if (await audioRecord.hasPermission()) {
         // await audioRecord.start(path: './');
+        await audioRecord.start(const RecordConfig(), path: './assets/myFile.m4a');
+        // final stream = await audioRecord.startStream(const RecordConfig(encoder: AudioEncoder.pcm16bits));
         setState(() {
           isRecording = true;
         });
@@ -60,9 +62,10 @@ class _audioRecorderState extends State<audioRecorder> {
     }
   }
 
-  Future<void> PlayRecording() async {
+  Future<void> playRecording() async {
     try {
-      await audioPlayer.play(audioPath as Source);
+      Source urlSource = UrlSource(audioPath);
+      await audioPlayer.play(urlSource);
     } catch (e) {
       print("Error:$e");
     }
@@ -87,7 +90,7 @@ class _audioRecorderState extends State<audioRecorder> {
           ),
           if (!isRecording && audioPath != null)
             ElevatedButton(
-              onPressed: PlayRecording,
+              onPressed: playRecording,
               child: const Text("Play Recording"),
             ),
         ],

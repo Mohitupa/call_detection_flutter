@@ -2,6 +2,7 @@ import 'package:call_detection/audio_recorder.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:upgrader/upgrader.dart';
 
 import 'Already_logs_screen.dart';
 import 'deletedphonelogs_screen.dart';
@@ -26,16 +27,18 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return OKToast(
-      child: MaterialApp(
-        title: 'Call Log',
-        theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+    return UpgradeAlert(
+      child: OKToast(
+        child: MaterialApp(
+          title: 'Call Log',
+          theme: ThemeData(
+            primarySwatch: Colors.deepPurple,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          home: uniqueNumber != null
+              ? MyHomePage(title: 'Call Log')
+              : UniqueNumberForm(),
         ),
-        home: uniqueNumber != null
-            ? MyHomePage(title: 'Call Log')
-            : UniqueNumberForm(),
       ),
     );
   }
@@ -116,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   checkpermission_audio_phone_logs() async {
     // if (await Permission.audio.request().isGranted) {
-      openAudioRecorder();
+    openAudioRecorder();
     // } else {
     //   showToast("Provide Phone permission to record a audio",
     //       position: ToastPosition.bottom);
@@ -147,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   const Padding(
                     padding: EdgeInsets.all(30),
                     child: Image(
-                        image: AssetImage('assets/vector3.png'),
+                      image: AssetImage('assets/vector3.png'),
                       height: 80,
                     ),
                   ),
@@ -243,13 +246,11 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Container(
         decoration: const BoxDecoration(),
         child: Center(
-          child: Center(
-            child: SingleChildScrollView(
-              child:Text("coming soon........"),
-            ),
-          )
-
-        ),
+            child: Center(
+          child: SingleChildScrollView(
+            child: Text("coming soon........"),
+          ),
+        )),
       ),
     );
   }
