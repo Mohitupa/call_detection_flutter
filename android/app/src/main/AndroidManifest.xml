@@ -18,6 +18,12 @@
         android:label="swing"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <receiver android:name="me.sodipto.phone_state_background.PhoneStateBackgroundServiceReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -56,28 +58,34 @@ class _UniqueNumberFormState extends State<UniqueNumberForm> {
   Future<void> _saveUniqueNumber() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('uniqueNumber', _uniqueNumberController.text);
-    await prefs.setString('logStartDate', (DateTime.now()).toString() );
+    await prefs.setString('logStartDate', (DateTime.now()).toString());
 
-    var data = [{
-      'uniqueNumber': _uniqueNumberController.text
-    }];
+    var data = [
+      {'uniqueNumber': _uniqueNumberController.text}
+    ];
 
-    var url = Uri.parse('${constants.apiUrl}/data');
-
+    var url = Uri.parse(
+        '${constants.apiUrl}/check-uniqueNumber?uniqueNumber=${_uniqueNumberController.text}');
     try {
-      print(data);
-      final response = await http.post(url, body: data[0]);
+      print(url);
+      var responseGet = await http.get(url);
+      var existingData = jsonDecode(responseGet.body);
+      if (existingData['exists'] == false) {
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Data stored successfully');
-      } else {
-        print('Failed to store data: ${response.statusCode}');
+        var urlStore = Uri.parse('${constants.apiUrl}/data');
+        final response = await http.post(urlStore, body: data[0]);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          print('Data stored successfully');
+        } else {
+          print('Failed to store data: ${response.statusCode}');
+        }
+
       }
     } catch (e) {
       // Error occurred
       print('Error: $e');
     }
-
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Unique number saved successfully')),
@@ -88,5 +96,4 @@ class _UniqueNumberFormState extends State<UniqueNumberForm> {
       ),
     );
   }
-
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
 
 class audioRecorder extends StatefulWidget {
   const audioRecorder({super.key});
@@ -12,7 +13,7 @@ class audioRecorder extends StatefulWidget {
 }
 
 class _audioRecorderState extends State<audioRecorder> {
-  final audioRecord = AudioRecorder();
+  final audioRecord = Record();
   late AudioPlayer audioPlayer;
   bool isRecording = false;
   String audioPath = '';
@@ -37,7 +38,7 @@ class _audioRecorderState extends State<audioRecorder> {
     try {
       if (await audioRecord.hasPermission()) {
         // await audioRecord.start(path: './');
-        await audioRecord.start(const RecordConfig(), path: './assets/myFile.m4a');
+        await audioRecord.start();
         // final stream = await audioRecord.startStream(const RecordConfig(encoder: AudioEncoder.pcm16bits));
         setState(() {
           isRecording = true;

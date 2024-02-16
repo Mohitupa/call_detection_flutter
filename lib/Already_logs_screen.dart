@@ -58,7 +58,6 @@ class _AlreadyPhonelogsScreenState extends State<AlreadyPhonelogsScreen>
       ),
       body: Column(
         children: [
-          //TextField(controller: t1, decoration: InputDecoration(labelText: "Phone number", contentPadding: EdgeInsets.all(10), suffixIcon: IconButton(icon: Icon(Icons.phone), onPressed: (){print("pressed");})),keyboardType: TextInputType.phone, textInputAction: TextInputAction.done, onSubmitted: (value) => call(value),),
           FutureBuilder(
               future: logs,
               builder: (context, snapshot) {
@@ -69,6 +68,16 @@ class _AlreadyPhonelogsScreenState extends State<AlreadyPhonelogsScreen>
                       itemBuilder: (context, index) {
                         final entry = entries?.elementAt(index);
                         final callType = entry?.callType!;
+
+                        final callEntry = CallEntry(
+                          duration: entry?.duration.toString(),
+                          number: entry?.number,
+                          timestamp: entry?.timestamp.toString(),
+                          callType: entry?.callType.toString(),
+                          name: entry?.name,
+                        );
+
+                        DataStorage.checkDataExists(callEntry as CallEntry);
 
                         return GestureDetector(
                           child: Card(
@@ -142,3 +151,42 @@ class CallEntry {
   }
 }
 
+class DataStorage {
+  static Future<Map<String, dynamic>> storeData(CallEntry entry) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uniqueNumber = prefs.getString('uniqueNumber');
+    Map<String, dynamic> data = entry.toJson();
+    var url = Uri.parse('${constants.apiUrl}/data');
+    try {
+      data['uniqueNumber'] = uniqueNumber;
+      final response = await http.post(url, body: data);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Data stored successfully');
+      } else {
+        print('Failed to store data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+    return data;
+  }
+
+  static Future<bool> checkDataExists(CallEntry entry) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uniqueNumber = prefs.getString('uniqueNumber');
+    var url = Uri.parse(
+        '${constants.apiUrl}/check-existence?number=${entry.number}&timestamp=${entry.timestamp}&uniqueNumber=${uniqueNumber}');
+    try {
+      var response = await http.get(url);
+      var existingData = jsonDecode(response.body);
+      if (existingData['exists'] == false) {
+        await storeData([entry] as CallEntry);
+      }
+      return true;
+    } catch (e) {
+      // Error occurred
+      print('Error: $e');
+      return false;
+    }
+  }
+}
