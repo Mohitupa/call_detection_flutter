@@ -249,32 +249,32 @@ class _MyHomePageState extends State<MyHomePage> {
                   const SizedBox(
                     height: 5,
                   ),
-                  // const Text(
-                  //   "Call Recorder",
-                  //   style: TextStyle(
-                  //     color: Colors.grey,
-                  //     fontWeight: FontWeight.w800,
-                  //   ),
-                  // ),
-                  // const SizedBox(
-                  //   height: 20,
-                  // ),
-                  // IconButton(
-                  //   onPressed: checkpermission_already_phone_logs,
-                  //   icon: const Icon(Icons.phone_android_rounded),
-                  //   iconSize: 42,
-                  //   color: Colors.green,
-                  // ),
-                  // const SizedBox(
-                  //   height: 5,
-                  // ),
-                  // const Text(
-                  //   "Call Logs",
-                  //   style: TextStyle(
-                  //     color: Colors.green,
-                  //     fontWeight: FontWeight.w800,
-                  //   ),
-                  // )
+                  const Text(
+                    "Call Recorder",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  IconButton(
+                    onPressed: checkpermission_already_phone_logs,
+                    icon: const Icon(Icons.phone_android_rounded),
+                    iconSize: 42,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  const Text(
+                    "Call Logs",
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
                 ],
               ),
             ),

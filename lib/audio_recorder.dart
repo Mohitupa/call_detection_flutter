@@ -4,6 +4,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
+import 'constant.dart' as constants;
+import 'package:http/http.dart' as http;
 
 class audioRecorder extends StatefulWidget {
   const audioRecorder({super.key});
@@ -53,7 +55,7 @@ class _audioRecorderState extends State<audioRecorder> {
     try {
       String? path = await audioRecord.stop();
       print("Path$path");
-
+      sendAudioToServer(path!);
       setState(() {
         isRecording = false;
         audioPath = path!;
@@ -69,6 +71,31 @@ class _audioRecorderState extends State<audioRecorder> {
       await audioPlayer.play(urlSource);
     } catch (e) {
       print("Error:$e");
+    }
+  }
+
+  Future<void> sendAudioToServer(String filePath) async {
+    try {
+      // Create a multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${constants.apiUrl}/upload-audio'),
+      );
+
+      // Attach the audio file to the request
+      request.files.add(await http.MultipartFile.fromPath('audio', filePath));
+
+      // Send the request
+      var response = await request.send();
+
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        print('Audio uploaded successfully');
+      } else {
+        print('Failed to upload audio. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error sending audio to server: $e');
     }
   }
 
