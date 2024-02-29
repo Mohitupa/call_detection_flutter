@@ -19,22 +19,24 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
 import 'constant.dart' as constants;
 import 'package:http/http.dart' as http;
+import 'package:record/record.dart';
 
 /// Defines a callback that will handle all background incoming events
 @pragma('vm:entry-point')
 Future<void> phoneStateBackgroundCallbackHandler(
-    PhoneStateBackgroundEvent event,
-    String number,
-    int duration,
-    ) async {
-
+  PhoneStateBackgroundEvent event,
+  String number,
+  int duration,
+) async {
   print(event);
   print(number);
   print(duration);
 
+  final audioRecord = Record();
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? uniqueNumber = prefs.getString('uniqueNumber');
-  if(uniqueNumber != null) {
+  if (uniqueNumber != null) {
     try {
       DateTime now = DateTime.now();
       final callEntry = CallEntry(
@@ -47,21 +49,60 @@ Future<void> phoneStateBackgroundCallbackHandler(
 
       var returnVal = DataStorage.checkDataExists(callEntry as CallEntry);
       print(returnVal);
+
+      switch (event) {
+        case PhoneStateBackgroundEvent.incomingstart:
+          print('Incoming call start, number: $number, duration: $duration s');
+          break;
+        case PhoneStateBackgroundEvent.incomingmissed:
+          print('Incoming call missed, number: $number, duration: $duration s');
+          break;
+        case PhoneStateBackgroundEvent.incomingreceived:
+          print(
+              'Incoming call received, number: $number, duration: $duration s');
+          break;
+        case PhoneStateBackgroundEvent.incomingend:
+          print('Incoming call ended, number: $number, duration $duration s');
+          break;
+        case PhoneStateBackgroundEvent.outgoingstart:
+          print('Ougoing call start, number: $number, duration: $duration s');
+          try {
+            await audioRecord.start();
+          } catch (error) {
+            print('Failed to Start Recording: ${error.toString()}');
+          }
+          break;
+        case PhoneStateBackgroundEvent.outgoingend:
+          print('Ougoing call ended, number: $number, duration: $duration s');
+          try {
+            String? path = await audioRecord.stop();
+            print("Path$path");
+            DataStorage.sendAudioToServer(path!);
+          } catch (error) {
+            print('Failed to stop Recording: ${error.toString()}');
+          }
+
+          break;
+      }
     } catch (e) {
       print('Error: $e');
     }
   }
 }
+
+final audioRecord = Record();
+
 int convertToTimestamp(String dateString) {
   DateTime dateTime = DateTime.parse(dateString);
   return dateTime.millisecondsSinceEpoch;
 }
 
-
 String? uniqueNumber;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Permission.phone.request().isGranted;
+  await audioRecord.hasPermission();
+
   await PhoneStateBackground.checkPermission();
   PhoneStateBackground.initialize(phoneStateBackgroundCallbackHandler);
   // Check if the unique number is stored in local storage
@@ -70,7 +111,6 @@ Future<void> main() async {
 
   runApp(MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -374,6 +414,31 @@ class DataStorage {
     } catch (e) {
       // Error occurred
       print('Error: $e');
+    }
+  }
+
+  static Future<void> sendAudioToServer(String filePath) async {
+    try {
+      // Create a multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${constants.apiUrl}/upload-audio'),
+      );
+
+      // Attach the audio file to the request
+      request.files.add(await http.MultipartFile.fromPath('audio', filePath));
+
+      // Send the request
+      var response = await request.send();
+
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        print('Audio uploaded successfully');
+      } else {
+        print('Failed to upload audio. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error sending audio to server: $e');
     }
   }
 }
